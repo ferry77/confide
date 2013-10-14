@@ -225,23 +225,27 @@ class ConfideUser extends Ardent implements UserInterface {
      */
     public function afterSave($success, $forced = false)
     {
-        if (! $this->confirmed && ! static::$app['cache']->get('confirmation_email_'.$this->id) )
-        {
-            // on behalf or the config file we should send and email or not
-            if (static::$app['config']->get('confide::signup_email') == true)
+        if($success){
+            
+            if (! $this->confirmed && ! static::$app['cache']->get('confirmation_email_'.$this->id) )
             {
-                $view = static::$app['config']->get('confide::email_account_confirmation');
-                $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
+                // on behalf or the config file we should send and email or not
+                if (static::$app['config']->get('confide::signup_email') == true)
+                {
+                    $view = static::$app['config']->get('confide::email_account_confirmation');
+                    $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
+                }
+                // Save in cache that the email has been sent.
+                $signup_cache = (int)static::$app['config']->get('confide::signup_cache');
+                if ($signup_cache !== 0)
+                {
+                    static::$app['cache']->put('confirmation_email_'.$this->id, true, $signup_cache);
+                }
             }
-            // Save in cache that the email has been sent.
-            $signup_cache = (int)static::$app['config']->get('confide::signup_cache');
-            if ($signup_cache !== 0)
-            {
-                static::$app['cache']->put('confirmation_email_'.$this->id, true, $signup_cache);
-            }
+    
+            return true;
         }
-
-        return true;
+        return false;
     }
 
     /**
